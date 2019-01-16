@@ -9,19 +9,7 @@
 #include "Lexer/predicate.h"
 
 
-template <typename T>
-class Predicae
-{
-public:
-
-
-private:
-
-};
-
-
-
-
+ 
 enum Token{
     Stam
 };
@@ -43,10 +31,9 @@ using namespace std;
 int main()
 {
 
-    compiler::BasicStringPredicate<std::string,Token> p("abc",Stam);
+    compiler::BasicStringPredicate<std::string> p("abc");
 
     string s="abc12345";
-
 
     auto match=p(s.begin());
     std::string_view v(&*match.end);

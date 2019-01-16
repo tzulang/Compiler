@@ -4,53 +4,55 @@
 
 namespace compiler {
 
+
 class NoMatchException : public std::exception
 {
    public:
-    virtual const char* what() const throw() {
-            return "Parser No Match Found!";
+    virtual const char* what() const throw()
+    {
+        return "Parser No Match Found!";
     }
 
 } noMatchException;
 
-template <typename StringType, typename TokenType>
+
+template <typename StringType>
 struct MatchResult
 {
-        bool found;
-        TokenType tokenType;
-        typename StringType::iterator start;
-        typename StringType::iterator end;
+    bool found;
+    typename StringType::iterator start;
+    typename StringType::iterator end;
 };
 
 
-template <typename StringType, typename TokenType =StringType>
+template <typename StringType>
 class BasicStringPredicate{
 public:
 
-    using Iterator = typename StringType::iterator;
-    using CharType = typename  StringType::value_type;
-    using Regex = std::basic_regex<CharType>;
-    using RegexMatch = std::match_results<const CharType*>;
+    using iterator = typename StringType::iterator;
+    using value_type = typename  StringType::value_type;
+    using regex = std::basic_regex<value_type>;
+    using match_results = std::match_results<const value_type*>;
 
     BasicStringPredicate() = delete;
 
 
-    BasicStringPredicate(StringType const& pattern, TokenType const& token)
-        : _pattern(pattern), _regex(pattern),_token(token)
+    BasicStringPredicate(StringType const& pattern)
+        : _pattern(pattern), _regex(pattern)
     {}
 
 
-    MatchResult<StringType, TokenType > operator()(Iterator const& iterator) const
+    MatchResult<StringType> operator()( iterator const& iter) const
     {
 
-        RegexMatch mres;
-        const CharType *c = &*iterator;
+        match_results mres;
+        const value_type *c = &*iter;
         bool found = std::regex_search(c, mres, _regex, std::regex_constants::match_continuous);
         if (found)
         {
-                return {true, _token, iterator, iterator + mres.length()};
+                return {true, iter, iter + mres.length()};
         }
-        return { false, _token, iterator, iterator };
+        return { false, iter, iter };
 
 
     }
@@ -59,7 +61,7 @@ public:
     BasicStringPredicate& operator=(StringType const& s)
     {
             this->_pattern &= s;
-            this->_regex = Regex(_pattern);
+            this->_regex = regex(_pattern);
             return *this;
     }
 
@@ -73,7 +75,7 @@ public:
     BasicStringPredicate& operator&=(BasicStringPredicate const& other)
     {
             this->_pattern &= other._pattern;
-            this->_regex = Regex(_pattern);
+            this->_regex = regex(_pattern);
             return *this;
     }
 
@@ -87,9 +89,16 @@ public:
     BasicStringPredicate& operator|=(BasicStringPredicate const& other)
     {
             this->_pattern = "[" + this->_pattern + "|" + other._pattern + "]";
-            this->_regex = Regex(_pattern);
+            this->_regex = regex(_pattern);
             return *this;
     }
+
+
+    BasicStringPredicate maybe() const
+    {
+            return BasicStringPredicate("[" + this->_pattern + "]?");
+    }
+
 
 
     const StringType& GetPattern() const
@@ -98,14 +107,13 @@ public:
     }
 
 
-    const TokenType& GetToken(){ return _token;}
+
 
 
 private:
 
     StringType _pattern;
-    TokenType _token;
-    Regex  _regex;
+    regex  _regex;
 };
 
 
@@ -113,22 +121,20 @@ private:
 
 
 
-template <typename StringType, typename TokenType=StringType>
-std::ostream & operator << (std::ostream &out, compiler::MatchResult<StringType,TokenType> const& m)
+template <typename StringType>
+std::ostream & operator << (std::ostream &out, compiler::MatchResult<StringType> const& m)
 {
-
     if (!m.found)
     {
         out <<"MatchResult_Error<No Match>";
     } else {
 
-        out <<"MatchResult<"  << m.tokenType << ", ";
+        out <<"MatchResult<"  ;
         for (auto it= m.start; it <m.end;it ++)
         {
             out <<*it;
         }
         out <<">";
     }
-
     return out;
 }

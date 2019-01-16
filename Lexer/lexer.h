@@ -1,9 +1,10 @@
-    #pragma onces
+#pragma onces
 
 #include "predicate.h"
 #include "pch.h"
 
 namespace compiler {
+
 
 template <typename StringType, typename TokenType>
 class Lexer {
@@ -27,7 +28,7 @@ public:
 
     void add(BasicStringPredicate<StringType> const& predicate)
     {
-        this->_predicates.push_back(predicate);
+        this->_predicates.emplace(predicate);
     }
 
 
