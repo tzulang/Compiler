@@ -6,29 +6,20 @@
 namespace compiler {
 
 
-template <typename StringType, typename TokenType>
+template <typename Predicate, typename TokenType>
 class Lexer {
 
 private:
 
-    using Predicate = BasicStringPredicate<StringType, TokenType>;
-    std::vector<Predicate> _predicates;
+    std::vector<tokens> tokens;
 
 public:
 
     Lexer() = default;
 
-
-    void add(TokenType const& tokenType, StringType const& pattern)
+    void add(TokenType const& token)
     {
-        this->_predicates.emplace( pattern, tokenType);
-
-    }
-
-
-    void add(BasicStringPredicate<StringType> const& predicate)
-    {
-        this->_predicates.emplace(predicate);
+        tokens (token);
     }
 
 
@@ -44,6 +35,8 @@ public:
         }
         throw noMatchException;
     }
+
+
 
 
 };

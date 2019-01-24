@@ -1,19 +1,41 @@
-#pragma once
-#include "predicate.h"
+//#pragma once
 
-template<typedef TokenType,typename Predicate>
-class Token
-{
+//#include "match.h"
 
-public:
 
-    Token(TokenType const& token, Predicate const& predicate)
-        :tokenType(token), Predicate(predicate)
-    {}
+//#include <functional>
 
-    const predicate& getPredicate() const { return predicate;}
-private:
-    const TokenType tokenType;
-    const Predicate predicate;
+//namespace compiler
+//{
 
-}
+//template<typename TokenType, typename Predicate>
+//class Token
+//{
+
+//    using iterator = typename Predicate::iterator;
+//    using value_type = typename Predicate::value_type;
+
+//public:
+
+//    Token(TokenType const& token, Predicate const& predicate)
+//        : Predicate(predicate), tokenType(token)
+//    {}
+
+//    const TokenType operator() (iterator const& iter) const
+//    {
+//        auto match = predicate(iter);
+
+//    }
+
+
+
+//private:
+
+//    const TokenType tokenType;
+//    const Predicate predicate;
+
+//};
+
+
+//}//namespace compiler
+

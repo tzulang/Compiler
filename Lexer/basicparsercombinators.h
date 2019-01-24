@@ -1,11 +1,10 @@
-#ifndef BASICPARSERCOMBINATORS_H
-#define BASICPARSERCOMBINATORS_H
+#pragma once
 
-
-class basicParserCombinators
+#include "parsercombinatror.h"
+#include <map>
+#include
+namespace compiler
 {
-public:
-    basicParserCombinators();
-};
-
-#endif // BASICPARSERCOMBINATORS_H
+    using Str =std::string;
+    std::map<std::string, Parser> parsers;
+}
