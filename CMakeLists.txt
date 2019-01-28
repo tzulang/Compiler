@@ -5,8 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-aux_source_directory(. SRC_LIST)
-aux_source_directory(Lexer SRC_LIST)
+
+add_subdirectory(Tests)
+
 
 INCLUDE_DIRECTORIES(.)
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+add_executable(Main main.cpp)
+
+

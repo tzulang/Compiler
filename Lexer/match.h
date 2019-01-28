@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iterator>
+
 namespace compiler
 {
 
@@ -58,15 +60,17 @@ public:
         return {true, this->begin(), other.end()};
     }
 
-    MatchResult& operator += (MatchResult<ValueType> & other) const {
+    MatchResult& operator += (MatchResult<ValueType> const& other) {
 
-        if (this->end != other || !*this || !other)
+        if (&*this->end() != &(*other.begin()) || !*this || !other)
         {
             throw addMatchException;
         }
-        this->_end=  other._end ;
+        this->_end =  other._end ;
         return *this;
     }
+
+    size_t size() const { return std::distance(_begin, _end);}
 
     const iterator& begin() const { return _begin;}
     const iterator& end()   const { return _end;}
@@ -78,7 +82,6 @@ private:
     iterator _end;
 
 };
-
 
 
 
@@ -96,7 +99,7 @@ std::ostream & operator << (std::ostream &out, compiler::MatchResult<StringType>
     } else {
 
         out <<"MatchResult<"  ;
-        for (auto it= m.begin(); it <m.end();it ++)
+        for (auto it= m.begin(); it <m.end(); it ++)
         {
             out <<*it;
         }

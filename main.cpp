@@ -10,7 +10,8 @@
 #include "Lexer/predicate.h"
 #include "Lexer/token.h"
 #include "Lexer/parsercombinatror.h"
-#include "Lexer/utils.h"
+
+#include <locale>
 
 
 enum class MyToken{
@@ -35,11 +36,42 @@ std::ostream& operator<<(std::ostream& o, MyToken const& token) {
     return o;
 }
 
-using namespace std;
-
-
-int main()
+template<typename StringType>
+StringType str(std::string const& s)
 {
+    return s;
+}
+
+template< >
+std::wstring str(std::string const& s)
+{
+    return std::wstring(s.begin(), s.end());
+}
+
+
+
+using namespace std;
+using namespace compiler;
+
+
+int main(int argc, char **argv)
+{
+   std::string s= "aaaaabcdef";
+   auto pa=pChar<string>('a');
+   auto pr= pRepeat (pa, 2);
+   auto match= pr(s.begin());
+
+   auto match2 =pMany(pa)(match.end());
+
+//   cout <<match <<'\n';
+//   cout <<match2 <<'\n';;
+   auto pt = pAnd<string>({pa, pa});
+   auto ptt =pAnd<string>({pt,pt});
+   auto match3= ptt(s.begin());
+   cout <<match3 <<'\n';
+   cout<<"\n";
+
+
 //    using namespace compiler;
 //    auto  pA= pChar<std::string>('A');
 //    auto  pB= pChar<std::string>('B');
@@ -53,15 +85,15 @@ int main()
 
 //    cout <<endl;
 
-    Range<int> r(1,10);
+//    Range<int> r(1,10);
 
 
-    auto v =r.as_vector();
+//    auto v =r.as_vector();
 
-    for (auto i: v)
-    {
-        cout<< i << ", ";
-    }
+//    for (auto i: v)
+//    {
+//        cout<< i << ", ";
+//    }
     //    std::string b = (match) ? "true": "false";
     //    cout<< b <<endl;
     //    cout << v << endl;
