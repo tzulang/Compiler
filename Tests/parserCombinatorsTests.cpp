@@ -1,218 +1,225 @@
 #include "testutils.h"
 #include "Lexer/parsercombinatror.h"
 #include "Lexer/match.h"
-
+#include "MyLanguage/definitions.h"
 #include <string_view>
 #include <locale>
 
+
 using namespace compiler;
-
-template <typename StringType>
-class ParserStringCombinator : public ::testing::Test
-{
-public:
-
-   using iterator = typename  StringType::iterator;
-
-    auto matchToStringView(MatchResult<StringType> const& m)
-    {
-        return std::basic_string_view(&*m.begin(), m.size());
-    }
-
-    auto restToStringView(MatchResult<StringType> const& m)
-    {
-        return std::basic_string_view(&*m.end());
-    }
-
-    void assertFound(Parser<StringType> const& parser,iterator const& begin, StringType const& found, StringType const& rest)
-    {
-        auto match = parser(begin);
-        ASSERT_TRUE(match);
-        ASSERT_EQ(matchToStringView(match), found);
-        ASSERT_EQ(restToStringView(match) ,(rest));
-    }
-
-    void assertNotFound(Parser<StringType> const& parser,iterator const& begin)
-    {
-        auto noMatch =parser(begin);
-        ASSERT_FALSE(noMatch);
-        ASSERT_EQ(matchToStringView(noMatch), "");
-        ASSERT_EQ(restToStringView(noMatch), std::basic_string_view(&*begin));
-    }
-
-};
-
-using str = std::string;
-using testStringParser=ParserStringCombinator<str>;
-//TODO: test on other encoding
+using str = strType;
 
 
-TEST_F(testStringParser, testpChar)
+
+TEST(testStringParser, testpChar)
 {
    auto pa= pChar<str>('a');
-   str s1 = "abcd";
-   str s2 = "bcd";
+   str s1 = S("abcd");
+   str s2 = S("bcd");
 
-   assertFound(pa,s1.begin(),"a",s2);
-   assertNotFound(pa ,s2.begin());
+   assertFound<str>(pa,s1.begin(), S("a"), s2);
+   assertNotFound<str>(pa ,s2.begin());
 
 
 }
 
 
-TEST_F(testStringParser, testAnd)
+TEST(testStringParser, testConcat)
 {
     auto pa= pChar<str>('a');
     auto pb= pChar<str>('b');
     auto pc= pChar<str>('c');
 
-    auto paAndAbc = pAnd(ParserList<str>{pa,pb,pc});
-    std::vector<str> failed_cases= {"bcdef","acdef", "abdef"};
-    str s = "abcdef";
-    str r = "def";
+    auto pConcatAbc = pConcat(ParserList<str>{pa,pb,pc});
+    std::vector<str> failed_cases= {S("bcdef"), S("acdef"), S("abdef")};
+    str s = S("abcdef");
+    str r = S("def");
 
-    assertFound(paAndAbc, s.begin(), "abc" , r);
+    assertFound<str>(pConcatAbc, s.begin(), S("abc") , r);
     for ( auto& f: failed_cases)
     {
-        assertNotFound(paAndAbc, f.begin());
+        assertNotFound<str>(pConcatAbc, f.begin());
     }
 
-    auto pAndA = pAnd(ParserList<str>{pa});
-    assertFound(pAndA, s.begin(), s.substr(0,1) , s.substr(1));
-    assertNotFound(pAndA ,failed_cases[0].begin());
+    auto pConcatA = pConcat(ParserList<str>{pa});
+    assertFound<str>(pConcatA, s.begin(), s.substr(0,1) , s.substr(1));
+    assertNotFound<str>(pConcatA ,failed_cases[0].begin());
 
-    auto pAndEmpty = pAnd(ParserList<str>{});
-    assertFound(pAndEmpty, s.begin(), "" ,  s);
+    auto pConcatEmpty = pConcat(ParserList<str>{});
+    assertFound<str>(pConcatEmpty, s.begin(), S("") ,  s);
 
-    auto pDoubleA =pAnd<str>({pa,pa});
-    auto pAndSquare = pAnd<str>({pDoubleA,pDoubleA});
-    str s4="aaaaabcd";
-    str s3 ="aaabcd";
-    assertFound(pDoubleA, s4.begin(), "aa" , "aaabcd");
-    assertFound(pAndSquare, s4.begin(), "aaaa" , "abcd");
-    assertNotFound(pAndSquare ,s3.begin());
+    auto pDoubleA =pConcat<str>({pa,pa});
+    auto pConcatSquare = pConcat<str>({pDoubleA,pDoubleA});
+    str s4 = S("aaaaabcd");
+    str s3 = S("aaabcd");
+    assertFound<str>(pDoubleA, s4.begin(), S("aa") , S("aaabcd"));
+    assertFound<str>(pConcatSquare, s4.begin(), S("aaaa") , S("abcd"));
+    assertNotFound<str>(pConcatSquare ,s3.begin());
 
 }
 
 
-TEST_F(testStringParser, testOr)
+TEST(testStringParser, testOr)
 {
     auto pa= pChar<str>('a');
     auto pb= pChar<str>('b');
     auto pc= pChar<str>('c');
 
-    auto pOrAbc = pOr(ParserList<str>{pa,pb,pc});
-    std::vector<str> cases= {"abcd", "bbcd", "cbcd"};
-    str f = "fbcd";
-    str r = "bcd";
+    auto pOrAbc = pOneOf(ParserList<str>{pa,pb,pc});
+    std::vector<str> cases= {S("abcd"), S("bbcd"), S("cbcd")};
+    str f = S("fbcd");
+    str r = S("bcd");
 
     for ( auto& s: cases)
     {
         str b=str(s.substr(0,1));
-        assertFound(pOrAbc, s.begin(),b , r);
+        assertFound<str>(pOrAbc, s.begin(),b , r);
 
     }
-    assertNotFound(pOrAbc ,f.begin());
+    assertNotFound<str>(pOrAbc ,f.begin());
 
-    auto pOrA = pOr(ParserList<str>{pa});
-    assertFound(pOrA, cases[0].begin(), cases[0].substr(0,1) , r);
-    assertNotFound(pOrA ,f.begin());
+    auto pOrA = pOneOf(ParserList<str>{pa});
+    assertFound<str>(pOrA, cases[0].begin(), cases[0].substr(0,1) , r);
+    assertNotFound<str>(pOrA ,f.begin());
 
-    auto pOrEmpty = pOr(ParserList<str>{});
-    assertFound(pOrEmpty, cases[0].begin(), "" , cases[0]);
+    auto pOrEmpty = pOneOf(ParserList<str>{});
+    assertFound<str>(pOrEmpty, cases[0].begin(), S("") , cases[0]);
 
-    auto pAB = pAnd<str>({pa,pb});
-    auto pLongOR = pOr<str>({pAB, pAB});
-    str abab = "ababababc";
-    assertFound(pLongOR, abab.begin(), "ab" , "abababc");
+    auto pAB = pConcat<str>({pa,pb});
+    auto pLongOR = pOneOf<str>({pAB, pAB});
+    str abab = S("ababababc");
+    assertFound<str>(pLongOR, abab.begin(), S("ab") , S("abababc"));
 
 }
 
 
-TEST_F(testStringParser, testMaybe)
+TEST(testStringParser, testMaybe)
 {
     auto pa= pChar<str>('a');
     auto pMaybeA = pMaybe(pa);
-    std::vector<str> cases= {"bcdef","acdef", "abdef"};
+    std::vector<str> cases= {S("bcdef"),S("acdef"), S("abdef")};
 
     for ( auto& s: cases)
     {
         if (s[0] == 'a')
-            assertFound(pMaybeA, s.begin(), "a" , s.substr(1));
+            assertFound<str>(pMaybeA, s.begin(), S("a") , s.substr(1));
         else
-            assertFound(pMaybeA, s.begin(), "" ,  s);
+            assertFound<str>(pMaybeA, s.begin(), S("") ,  s);
     }
 }
 
 
-TEST_F(testStringParser, testAny)
+TEST(testStringParser, testAny)
 {
-    std::vector<str> cases= {"bcdef","acdef", "rbdef"};
+    std::vector<str> cases= {S("bcdef"), S("acdef"), S("rbdef")};
     for ( auto& s: cases)
     {
-        assertFound(pAny<str>, s.begin(), s.substr(0,1) , s.substr(1));
+        assertFound<str>(pAny<str>, s.begin(), s.substr(0,1) , s.substr(1));
     }
 }
 
 
-TEST_F(testStringParser, testMany)
+TEST(testStringParser, testMany)
 {
     auto pa= pChar<str>('a');
     auto pManyA = pMany(pa);
 
-    std::vector<str> cases= {"cdef","acdef", "aacdef", "aaacdef",  "aaaacdef"};
-    str a="";
+    std::vector<str> cases= {S("cdef"), S("acdef"), S("aacdef"), S("aaacdef"),  S("aaaacdef")};
+    str a=S("");
     for ( auto& s: cases)
     {
-        assertFound(pManyA , s.begin(), a , s.substr(a.size()));
-        a+="a";
+        assertFound<str>(pManyA , s.begin(), a , s.substr(a.size()));
+        a+=S("a");
     }
 }
 
 
-TEST_F(testStringParser, testRepeat)
+TEST(testStringParser, testRepeat)
 {
     auto pa= pChar<str>('a');
 
-    std::vector<str> cases= {"cdef","acdef", "aacdef", "aaacdef",  "aaaacdef"};
-    str a = "";
-    for (int i =0 ; i < cases.size(); i ++)
+    std::vector<str> cases= {S("cdef"), S("acdef"), S("aacdef"), S("aaacdef"), S("aaaacdef")};
+    str a = S("");
+    for (size_t i =0 ; i < cases.size(); i ++)
     {
-        for (int j =0 ; j < cases.size(); j ++)
+        for (size_t j =0 ; j < cases.size(); j ++)
         {
             auto pRepeatA = pRepeat<str>(pa,i);
             if (i <= j)
-                assertFound(pRepeatA , cases[j].begin(), a , cases[j].substr(i));
+                assertFound<str>(pRepeatA , cases[j].begin(), a , cases[j].substr(i));
             else
-                assertNotFound(pRepeatA, cases[j].begin());
+                assertNotFound<str>(pRepeatA, cases[j].begin());
         }
-        a+="a";
+        a+=S("a");
     }
 }
 
 
-TEST_F(testStringParser, testAtLeat)
+TEST(testStringParser, testAtLeat)
 {
     auto pa= pChar<str>('a');
 
-    std::vector<str> cases= {"cdef","acdef", "aacdef", "aaacdef",  "aaaacdef"};
+    std::vector<str> cases= {S("cdef"), S("acdef"), S("aacdef"), S("aaacdef"), S("aaaacdef")};
 
-    for (int i =0 ; i < cases.size(); i ++)
+    for (size_t i =0 ; i < cases.size(); i ++)
     {
-        for (int j =0 ; j < cases.size(); j ++)
+        for (size_t j =0 ; j < cases.size(); j ++)
         {
             auto pAtLeastA = pAtLeast<str>(pa,i);
             if (i <= j){
                 auto as=cases[j].substr(0,j);
                 auto rest = cases[j].substr(j);
-                assertFound(pAtLeastA , cases[j].begin(), as , rest);
+                assertFound<str>(pAtLeastA , cases[j].begin(), as , rest);
             }
             else
-                assertNotFound(pAtLeastA, cases[j].begin());
+                assertNotFound<str>(pAtLeastA, cases[j].begin());
         }
     }
 
 }
 
+
+TEST(testStringParser, testRange)
+{
+
+    auto rangeAD = pRange<str>('a','d');
+    std::vector<str> cases= {S("adef"), S("bdef"), S("cdef"), S("ddef")};
+    str f = S("edef");
+
+    for (str & s: cases)
+        assertFound<str>(rangeAD, s.begin(), s.substr(0,1), S("def"));
+    assertNotFound<str>(rangeAD, f.begin());
+}
+
+
+TEST(testStringParser, testWord)
+{
+    auto word = pWord(strType(S("abcd")));
+    str s = S("abcd");
+    str r = S("efg");
+    str f = S("abcefg");
+
+    assertFound<str>(word, (s+r).begin(), s, r);
+
+}
+
+TEST(testStringParser, testMatchMax)
+{
+    str s = S("abcdefg");
+    ParserList<str> parsers;
+    for (auto & c: s)
+    {
+        parsers.push_back(pChar<str>(c));
+    }
+
+
+    for (size_t i : Range<size_t>(0,parsers.size()))
+    {
+        ParserList<str> pack(parsers.begin(), parsers.begin() + i);
+        auto pMax = pMatchMax(pack);
+        assertFound(pMax, s.begin(), s.substr(0,i), s.substr(i));
+
+    }
+}
 
 TEST_MAIN

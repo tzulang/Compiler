@@ -1,4 +1,4 @@
-        #include <iostream>
+#include <iostream>
 
 #include <string>
 
@@ -10,7 +10,8 @@
 #include "Lexer/predicate.h"
 #include "Lexer/token.h"
 #include "Lexer/parsercombinatror.h"
-
+#include "Utils/Range.h"
+#include "MyLanguage/definitions.h"
 #include <locale>
 
 
@@ -54,22 +55,46 @@ using namespace std;
 using namespace compiler;
 
 
+//#define WIDEN2(x) L ## x
+//#define S(x) WIDEN2(x)
+//#define S(x) (x)
+
 int main(int argc, char **argv)
 {
-   std::string s= "aaaaabcdef";
-   auto pa=pChar<string>('a');
-   auto pr= pRepeat (pa, 2);
-   auto match= pr(s.begin());
+    using namespace std::string_literals;
 
-   auto match2 =pMany(pa)(match.end());
+    char a='z';
+    a++;
+    Range<char> low('a',char('z'+1));
+    auto lowVec = low.as_vector();
+
+//    wstring s=S("asdasdasd") ;
+//    wchar_t c= S('s');
+
+//    wcout << c;
+
+    std::u32string  s32= U"we";
+
+//    Range srange(s.begin(), s.end());
+//    for (auto c :low)
+//    {
+//        wcout << c << ", ";
+//    }
+//    cout << "d "<<Q(hello) << " " <<S(hello) <<endl;
+//   std::string s= "aaaaabcdef";
+//   auto pa=pChar<string>('a');
+//   auto pr= pRepeat (pa, 2);
+//   auto match= pr(s.begin());
+
+//   auto match2 =pMany(pa)(match.end());
 
 //   cout <<match <<'\n';
 //   cout <<match2 <<'\n';;
-   auto pt = pAnd<string>({pa, pa});
-   auto ptt =pAnd<string>({pt,pt});
-   auto match3= ptt(s.begin());
-   cout <<match3 <<'\n';
-   cout<<"\n";
+//   auto pt = pConcat<string>({pa, pa});
+//   auto ptt =pConcat<string>({pt,pt});
+//   auto match3= ptt(s.begin());
+//   cout <<match3 <<'\n';
+//   cout<<"\n";
 
 
 //    using namespace compiler;

@@ -13,7 +13,7 @@ class NoMatchException : public std::exception
         return "Parser No Match Found!";
     }
 
-} noMatchException;
+} ;
 
 
 class AddMatchException : public std::exception
@@ -24,7 +24,7 @@ class AddMatchException : public std::exception
         return "adding matches is only possible when the iterators are continuos and valid";
     }
 
-} addMatchException;
+};
 
 template <typename ValueType>
 class MatchResult
@@ -54,7 +54,7 @@ public:
 
         if (this->end() != other.begin() || !*this || !other)
         {
-            throw addMatchException;
+            throw AddMatchException();
         }
 
         return {true, this->begin(), other.end()};
@@ -64,7 +64,7 @@ public:
 
         if (&*this->end() != &(*other.begin()) || !*this || !other)
         {
-            throw addMatchException;
+            throw AddMatchException();
         }
         this->_end =  other._end ;
         return *this;

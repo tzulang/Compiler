@@ -2,6 +2,7 @@
 
 #include "match.h"
 #include "pch.h"
+#include "Utils/Range.h"
 
 
 namespace compiler
@@ -50,7 +51,22 @@ inline Parser<StringType> pChar(typename StringType::value_type const& c)
 
 
 template <typename StringType>
-Parser<StringType> pAnd(ParserList<StringType> const& parsers)
+inline Parser<StringType> pPredicate( std::function<bool(typename StringType::value_type const&)> const& cp)
+{
+    auto p = [=](typename StringType::iterator const& it)
+    {
+        if (cp(*it))
+            return pTrue<StringType>(it);
+        else
+            return pFalse<StringType>(it);
+    };
+
+    return p;
+}
+
+
+template <typename StringType>
+inline Parser<StringType> pConcat(ParserList<StringType> const& parsers)
 {
 
     if (!parsers.size()) return pBlank<StringType>;
@@ -76,7 +92,7 @@ Parser<StringType> pAnd(ParserList<StringType> const& parsers)
 
 
 template <typename StringType>
-Parser<StringType> pOr(ParserList<StringType> const& parsers)
+inline Parser<StringType> pOneOf(ParserList<StringType> const& parsers)
 {
 
     if (!parsers.size()) return pBlank<StringType>;
@@ -100,7 +116,26 @@ Parser<StringType> pOr(ParserList<StringType> const& parsers)
 
 
 template <typename StringType>
-Parser<StringType> pMaybe(Parser<StringType> const& parser)
+inline Parser<StringType> pRange(
+        typename StringType::value_type const& begin,
+        typename StringType::value_type const& end)
+{
+    auto pastEnd =end ;
+    pastEnd++;
+    Range<typename StringType::value_type> range(begin, pastEnd);
+    ParserList<StringType> parsers;
+    parsers.reserve(range.size());
+    for (auto const& c : range)
+    {
+        parsers.push_back(pChar<StringType>(c));
+    }
+
+    return pOneOf<StringType>(parsers);
+}
+
+
+template <typename StringType>
+inline Parser<StringType> pMaybe(Parser<StringType> const& parser)
 {
     auto p = [=](typename StringType::iterator const& it)
     {
@@ -115,7 +150,7 @@ Parser<StringType> pMaybe(Parser<StringType> const& parser)
 
 
 template <typename StringType>
-MatchResult<StringType> pAny(typename StringType::iterator const& it)
+inline MatchResult<StringType> pAny(typename StringType::iterator const& it)
 {
     return pTrue<StringType>(it);
 }
@@ -142,7 +177,7 @@ Parser<StringType> pMany(Parser<StringType> const& parser)
 
 
 template <typename StringType>
-Parser<StringType> pRepeat(Parser<StringType> const& parser, size_t n)
+inline Parser<StringType> pRepeat(Parser<StringType> const& parser, size_t n)
 {
 
     if (n ==0) return pBlank<StringType>;
@@ -151,23 +186,70 @@ Parser<StringType> pRepeat(Parser<StringType> const& parser, size_t n)
     res.reserve(n);
     for (size_t i=0; i<n; i++)
         res.push_back(parser);
-    return pAnd(res);
+    return pConcat(res);
 
 }
 
 
 template <typename StringType>
-Parser<StringType> pAtLeast(Parser<StringType> const& parser, size_t n)
+inline Parser<StringType> pAtLeast(Parser<StringType> const& parser, size_t n)
 {
-    return pAnd<StringType>({pRepeat<StringType>(parser, n), pMany<StringType>(parser)});
+    return pConcat<StringType>({pRepeat<StringType>(parser, n), pMany<StringType>(parser)});
 }
 
 
 template <typename StringType>
-Parser<StringType> pOneOrMore(Parser<StringType> const& parser)
+inline Parser<StringType> pOneOrMore(Parser<StringType> const& parser)
 {
     return pAtLeast(parser, 1);
 }
 
+
+template <typename StringType>
+inline Parser<StringType> pWord(StringType const& word)
+{
+
+    ParserList<StringType> parsers;
+    parsers.reserve(word.size());
+    for (const auto& c : word )
+    {
+        parsers.push_back(pChar<StringType>(c));
+    }
+
+    return pConcat<StringType>(parsers);
+}
+
+template <typename StringType>
+inline Parser<StringType> pMatchMax(ParserList<StringType> const& parsers)
+{
+    if (parsers.empty())
+    {
+        return pBlank<StringType>;
+    }
+
+    auto p = [=](typename StringType::iterator const& it)
+    {
+        auto parserItr = parsers.begin();
+        auto match = (*parserItr)(it);
+        if (!match)
+        {
+            return pFalse<StringType>(it);
+        }
+
+
+        for (parserItr++; parserItr != parsers.end(); parserItr++)
+        {
+            auto nextMatch = (*parserItr)(match.end());
+            if (!nextMatch)
+                return match;
+            else
+                match+= nextMatch;
+        }
+
+        return match;
+    };
+
+    return p;
+}
 
 }//namespace compiler
